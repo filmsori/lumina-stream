@@ -16,7 +16,6 @@ export default function FilmekPage() {
       if (error) {
         console.error('Hiba a filmek betöltésekor:', error.message);
       } else {
-        console.log('Adatbázisból megérkezett adatok:', data); // <-- Itt láthatod F12-ben a pontos kulcsokat!
         setMovies(data || []);
       }
       setLoading(false);
@@ -166,22 +165,13 @@ function MovieRow({ title, movies }: { title: string; movies: any[] }) {
 }
 
 function MovieCard({ movie }: { movie: any }) {
-  // Itt mostantól MIND EGYETlen lehetséges oszlopnevet átvizsgálunk az adatbázisból!
-  const rawImage = 
-    movie.poster_path || 
-    movie.image_url || 
-    movie.poster || 
-    movie.thumbnail || 
-    movie.image || 
-    movie.img || 
-    movie.cover || 
-    movie.photo || 
-    '';
+  const rawImage = movie.poster_path || movie.image_url || movie.poster || movie.thumbnail || '';
   
   let imageUrl = '';
   if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
     imageUrl = rawImage;
   } else if (rawImage.startsWith('/')) {
+    // Itt volt a hiba: mostantól biztosan hozzáadjuk a TMDB szerver címét
     imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
   } else if (rawImage) {
     imageUrl = `https://image.tmdb.org/t/p/w500/${rawImage}`;
