@@ -16,6 +16,7 @@ export default function FilmekPage() {
       if (error) {
         console.error('Hiba a filmek betöltésekor:', error.message);
       } else {
+        console.log('Adatbázisból megérkezett adatok:', data); // <-- Itt láthatod F12-ben a pontos kulcsokat!
         setMovies(data || []);
       }
       setLoading(false);
@@ -165,8 +166,17 @@ function MovieRow({ title, movies }: { title: string; movies: any[] }) {
 }
 
 function MovieCard({ movie }: { movie: any }) {
-  // Ellenőrizzük az összes lehetséges mezőnevet az adatbázisban
-  const rawImage = movie.poster_path || movie.image_url || movie.poster || movie.thumbnail || '';
+  // Itt mostantól MIND EGYETlen lehetséges oszlopnevet átvizsgálunk az adatbázisból!
+  const rawImage = 
+    movie.poster_path || 
+    movie.image_url || 
+    movie.poster || 
+    movie.thumbnail || 
+    movie.image || 
+    movie.img || 
+    movie.cover || 
+    movie.photo || 
+    '';
   
   let imageUrl = '';
   if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
@@ -195,10 +205,6 @@ function MovieCard({ movie }: { movie: any }) {
             src={imageUrl} 
             alt={title} 
             className="w-full h-full object-cover object-center group-hover:scale-110 transition duration-500"
-            onError={(e) => {
-              // Ha betöltési hiba történik (pl. érvénytelen link), rejtse el vagy mutasson helyet
-              (e.target as HTMLElement).style.display = 'none';
-            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs text-center p-4">
