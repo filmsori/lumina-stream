@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Link from 'next/link';
+// Ha van Navbar komponensed, ide beimportálhatod:
+// import Navbar from '@/components/Navbar';
 
 export default function FilmekPage() {
   const [movies, setMovies] = useState<any[]>([]);
@@ -57,6 +59,21 @@ export default function FilmekPage() {
   return (
     <div className="min-h-screen bg-[#0b0b0b] text-white selection:bg-red-600 selection:text-white pb-24">
       
+      {/* Ha van Navbar komponensed, itt megjelenítheted: */}
+      {/* <Navbar /> */}
+
+      {/* Felső navigációs sáv / Logó, ami a kezdőképernyőre visz */}
+      <div className="bg-[#0b0b0b]/90 backdrop-blur-md sticky top-0 z-50 border-b border-white/5 px-6 md:px-12 py-4 flex items-center justify-between">
+        <Link href="/" className="text-red-600 font-black text-2xl tracking-wider hover:opacity-95 transition">
+          FILMSORI
+        </Link>
+        <div className="flex items-center gap-6 text-sm font-medium text-gray-300">
+          <Link href="/" className="hover:text-white transition">Kezdőlap</Link>
+          <Link href="/filmek" className="text-white font-bold">Filmek</Link>
+          <Link href="/sorozatok" className="hover:text-white transition">Sorozatok</Link>
+        </div>
+      </div>
+
       <div className="max-w-[1700px] mx-auto px-6 md:px-12 pt-10 pb-6">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
           <div>
