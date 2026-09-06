@@ -165,16 +165,16 @@ function MovieRow({ title, movies }: { title: string; movies: any[] }) {
 }
 
 function MovieCard({ movie }: { movie: any }) {
+  // Közvetlenül azt vesszük ki, ami az adatbázisban van, semmilyen kiegészítést nem kényszerítünk rá, 
+  // hacsak nem kezdődik "/" jellel, de ha a többibnél is 404 van, valószínűleg teljes linket vagy más struktúrát vár.
   const rawImage = movie.poster_path || movie.image_url || movie.poster || movie.thumbnail || '';
   
-  let imageUrl = '';
-  if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
-    imageUrl = rawImage;
-  } else if (rawImage.startsWith('/')) {
-    // Itt volt a hiba: mostantól biztosan hozzáadjuk a TMDB szerver címét
-    imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
-  } else if (rawImage) {
-    imageUrl = `https://image.tmdb.org/t/p/w500/${rawImage}`;
+  let imageUrl = rawImage;
+  // Ha az adatbázisban csak egy fél útvonal van (pl. /efCS2vbfe...), akkor tesszük csak hozzá a TMDB-t. 
+  // Ha ez okozza a hibát, akkor az oszlopodban valami más van. Nézzük meg így:
+  if (rawImage && !rawImage.startsWith('http://') && !rawImage.startsWith('https://')) {
+    const cleanPath = rawImage.startsWith('/') ? rawImage : `/${rawImage}`;
+    imageUrl = `https://image.tmdb.org/t/p/w500${cleanPath}`;
   }
 
   const title = movie.title || movie.name || 'Ismeretlen cím';
