@@ -12,10 +12,7 @@ export default function FilmekPage() {
 
   useEffect(() => {
     const fetchMovies = async () => {
-      const { data, error } = await supabase
-        .from('movies')
-        .select('*');
-
+      const { data, error } = await supabase.from('movies').select('*');
       if (error) {
         console.error('Hiba a filmek betöltésekor:', error.message);
       } else {
@@ -57,17 +54,19 @@ export default function FilmekPage() {
   return (
     <div className="min-h-screen bg-[#0b0b0b] text-white selection:bg-red-600 selection:text-white pb-24">
       
-      {/* Teljes értékű, interaktív felső navigációs sáv */}
+      {/* Szigorúan balra rögzített navigációs sáv */}
       <nav className="bg-[#0b0b0b]/95 backdrop-blur-md sticky top-0 z-50 border-b border-white/5 px-6 md:px-12 py-4 flex items-center justify-between">
-        <Link href="/" className="group cursor-pointer">
-          <span className="text-red-600 font-black text-2xl tracking-wider group-hover:opacity-90 transition">
-            FILMSORI
-          </span>
-        </Link>
-        <div className="flex items-center gap-6 text-sm font-medium text-gray-300">
-          <Link href="/" className="hover:text-white transition">Kezdőlap</Link>
-          <Link href="/filmek" className="text-white font-bold">Filmek</Link>
-          <Link href="/sorozatok" className="hover:text-white transition">Sorozatok</Link>
+        <div className="flex items-center gap-10">
+          <Link href="/" className="group cursor-pointer">
+            <span className="text-red-600 font-black text-2xl tracking-wider group-hover:opacity-90 transition">
+              FILMSORI
+            </span>
+          </Link>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
+            <Link href="/" className="hover:text-white transition">Kezdőlap</Link>
+            <Link href="/filmek" className="text-white font-bold">Filmek</Link>
+            <Link href="/sorozatok" className="hover:text-white transition">Sorozatok</Link>
+          </div>
         </div>
       </nav>
 
