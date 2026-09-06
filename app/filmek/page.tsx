@@ -54,7 +54,6 @@ export default function FilmekPage() {
   return (
     <div className="min-h-screen bg-[#0b0b0b] text-white selection:bg-red-600 selection:text-white pb-24">
       
-      {/* Szigorúan balra rögzített navigációs sáv */}
       <nav className="bg-[#0b0b0b]/95 backdrop-blur-md sticky top-0 z-50 border-b border-white/5 px-6 md:px-12 py-4 flex items-center justify-between">
         <div className="flex items-center gap-10">
           <Link href="/" className="group cursor-pointer">
@@ -166,10 +165,11 @@ function MovieRow({ title, movies }: { title: string; movies: any[] }) {
 }
 
 function MovieCard({ movie }: { movie: any }) {
+  // Ellenőrizzük az összes lehetséges mezőnevet az adatbázisban
   const rawImage = movie.poster_path || movie.image_url || movie.poster || movie.thumbnail || '';
   
   let imageUrl = '';
-  if (rawImage.startsWith('http')) {
+  if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
     imageUrl = rawImage;
   } else if (rawImage.startsWith('/')) {
     imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
@@ -195,6 +195,10 @@ function MovieCard({ movie }: { movie: any }) {
             src={imageUrl} 
             alt={title} 
             className="w-full h-full object-cover object-center group-hover:scale-110 transition duration-500"
+            onError={(e) => {
+              // Ha betöltési hiba történik (pl. érvénytelen link), rejtse el vagy mutasson helyet
+              (e.target as HTMLElement).style.display = 'none';
+            }}
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-500 text-xs text-center p-4">
