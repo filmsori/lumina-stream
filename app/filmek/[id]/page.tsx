@@ -13,16 +13,17 @@ export default function FilmReszletekPage() {
   const [movie, setMovie] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+ useEffect(() => {
     if (!id) return;
 
     const fetchMovie = async () => {
-      // Film lekérése az ID alapján az adatbázisból
+      console.log("Keresett ID:", id);
+      
       const { data, error } = await supabase
         .from('movies')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error('Hiba a film lekérésekor:', error.message);
