@@ -145,6 +145,7 @@ function MediaCard({ item, type }: { item: any; type: 'filmek' | 'sorozatok' }) 
     if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
       imageUrl = rawImage;
     } else {
+      // Ha nem http-vel kezdődik, fixen hozzáadjuk a TMDB w500-as kép-kiszolgálóját
       const cleanPath = rawImage.startsWith('/') ? rawImage : `/${rawImage}`;
       imageUrl = `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
@@ -163,6 +164,10 @@ function MediaCard({ item, type }: { item: any; type: 'filmek' | 'sorozatok' }) 
           src={imageUrl} 
           alt={title} 
           className="w-full h-full object-cover"
+          onError={(e) => {
+            // Biztonsági háló: ha bármi miatt mégis hiba lenne, elrejti a képet törés helyett
+            (e.target as HTMLElement).style.display = 'none';
+          }}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-400 text-xs text-center p-2">
