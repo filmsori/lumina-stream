@@ -156,9 +156,7 @@ export default function Home() {
   );
 }
 
-// Cseréld le a MediaCard komponenst az app/page.tsx fájl alján erre:
 function MediaCard({ item }: { item: any }) {
-  // Alaposabb mezőellenőrzés
   const rawImage = item?.poster_path || item?.image_url || item?.poster || item?.thumbnail || item?.backdrop_path || '';
   
   let imageUrl = '';
@@ -173,12 +171,14 @@ function MediaCard({ item }: { item: any }) {
   }
 
   const title = item?.title || item?.name || 'Ismeretlen cím';
-  const detailUrl = item?.id ? `/film/${item.id}` : '#';
+  
+  // Itt történik a csere: ha a mappád neve 'filmek', akkor ez irányítja oda helyesen
+  const detailUrl = item?.id ? `/filmek/${item.id}` : '#';
 
   return (
     <Link 
       href={detailUrl} 
-      className="group relative bg-[#181818] rounded-md overflow-hidden flex-shrink-0 w-[200px] md:w-[240px] aspect-[16/9] block transition-transform duration-300 hover:scale-105 hover:z-30 shadow-lg border border-white/5"
+      className="group relative bg-[#181818] rounded-md overflow-hidden flex-shrink-0 w-[200px] md:w-[240px] aspect-[16/9] block transition-transform duration-300 hover:scale-105 hover:z-30 shadow-lg border border-white/5 cursor-pointer"
     >
       {imageUrl ? (
         <img 
@@ -186,7 +186,6 @@ function MediaCard({ item }: { item: any }) {
           alt={title} 
           className="w-full h-full object-cover"
           onError={(e) => {
-            // Ha mégis elromlana a betöltés, elrejti a hibás képet és nem dob konzol hibát
             (e.target as HTMLElement).style.display = 'none';
           }}
         />
