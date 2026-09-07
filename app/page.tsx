@@ -43,19 +43,21 @@ export default function Home() {
   }
 
   const heroItem = movies[0] || shows[0];
-  const heroImage = heroItem 
-    ? (heroItem.backdrop_path || heroItem.poster_path || heroItem.image_url || '') 
-    : '';
+  const rawHeroImage = heroItem ? (heroItem.backdrop_path || heroItem.poster_path || heroItem.image_url || '') : '';
   
   let heroImageUrl = '';
-  if (heroImage) {
-    heroImageUrl = heroImage.startsWith('http') ? heroImage : `https://image.tmdb.org/t/p/original${heroImage}`;
+  if (rawHeroImage) {
+    if (rawHeroImage.startsWith('http')) {
+      heroImageUrl = rawHeroImage;
+    } else {
+      const cleanPath = rawHeroImage.startsWith('/') ? rawHeroImage : `/${rawHeroImage}`;
+      heroImageUrl = `https://image.tmdb.org/t/p/original${cleanPath}`;
+    }
   }
 
   return (
     <div className="min-h-screen bg-[#141414] text-white selection:bg-red-600 selection:text-white pb-24">
       
-      {/* Navigáció */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-6 md:px-12 py-4 flex items-center justify-between backdrop-blur-[2px]">
         <div className="flex items-center gap-10">
           <Link href="/" className="text-red-600 font-black text-2xl tracking-wider hover:opacity-90 transition">
@@ -69,7 +71,6 @@ export default function Home() {
         </div>
       </nav>
 
-      {/* Hero Banner */}
       {heroItem && (
         <div className="relative w-full h-[65vh] md:h-[75vh] flex items-end pb-16 px-6 md:px-12 overflow-hidden">
           {heroImageUrl && (
@@ -103,7 +104,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* Tartalmi sávok */}
       <div className="space-y-10 -mt-10 relative z-20">
         {movies.length > 0 && (
           <div className="px-6 md:px-12">
@@ -144,10 +144,9 @@ function MediaCard({ item, type }: { item: any; type: 'filmek' | 'sorozatok' }) 
   if (typeof rawImage === 'string' && rawImage.trim() !== '') {
     if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
       imageUrl = rawImage;
-    } else if (rawImage.startsWith('/')) {
-      imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
     } else {
-      imageUrl = `https://image.tmdb.org/t/p/w500/${rawImage}`;
+      const cleanPath = rawImage.startsWith('/') ? rawImage : `/${rawImage}`;
+      imageUrl = `https://image.tmdb.org/t/p/w500${cleanPath}`;
     }
   }
 
@@ -164,9 +163,6 @@ function MediaCard({ item, type }: { item: any; type: 'filmek' | 'sorozatok' }) 
           src={imageUrl} 
           alt={title} 
           className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLElement).style.display = 'none';
-          }}
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-400 text-xs text-center p-2">
