@@ -1,168 +1,131 @@
-// app/sorozatok/[id]/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
-export default function SeriesDetailPage() {
-  const { id } = useParams();
-  const [series, setSeries] = useState<any>(null);
-  const [sources, setSources] = useState<any[]>([]);
-  const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [selectedEpisode, setSelectedEpisode] = useState<any>(null);
+export default function SorozatReszletekPage() {
+  const params = useParams();
+  const router = useRouter();
+  
+  const rawId = params?.id;
+  const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+  const [show, setShow] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchSeriesDetails() {
-      // 1. Sorozat adatainak lekérése
-      const { data: seriesData, error: seriesError } = await supabase
-        .from('series')
+    if (!id) return;
+
+    const fetchShow = async () => {
+      // Megpróbáljuk lekérni a 'shows' táblából, ha nincs, a 'series' táblából
+      let { data, error } = await supabase
+        .from('shows')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (seriesError || !seriesData) {
-        setLoading(false);
-        return;
-      }
-      setSeries(seriesData);
-
-      // 2. Epizód források lekérése
-      const { data: sourcesData, error: sourcesError } = await supabase
-        .from('series_sources')
-        .select('*')
-        .eq('series_id', id)
-        .order('season_number', { ascending: true })
-        .order('episode_number', { ascending: true });
-
-      if (!sourcesError && sourcesData) {
-        setSources(sourcesData);
-        // Alapértelmezésben az első évad első epizódja vagy az első elérhető rész legyen kiválasztva
-        if (sourcesData.length > 0) {
-          setSelectedSeason(sourcesData[0].season_number);
-          setSelectedEpisode(sourcesData[0]);
-        }
+      if (!data) {
+        const res = await supabase
+          .from('series')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+        data = res.data;
       }
 
+      setShow(data);
       setLoading(false);
-    }
+    };
 
-    if (id) {
-      fetchSeriesDetails();
-    }
+    fetchShow();
   }, [id]);
 
   if (loading) {
-    return <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">Betöltés...</div>;
+    return (
+      <div className="min-h-screen bg-[#0b0b0b] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 font-medium tracking-wider">FILMSORI</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!series) {
-    return <div className="min-h-screen bg-neutral-950 text-white flex items-center justify-center">A sorozat nem található.</div>;
+  if (!show) {
+    return (
+      <div className="min-h-screen bg-[#0b0b0b] text-white flex flex-col items-center justify-center gap-4">
+        <h1 className="text-2xl font-bold text-gray-300">A sorozat nem található az adatbázisban.</h1>
+        <Link href="/" className="bg-red-600 text-white px-6 py-2 rounded-lg font-medium">
+          Vissza a főoldalra
+        </Link>
+      </div>
+    );
   }
 
-  // Meglévő évadok listájának kinyerése duplikáció nélkül
-  const seasons = Array.from(new Set(sources.map((s) => s.season_number)));
-
-  // Az aktuálisan kiválasztott évad epizódjai
-  const currentEpisodes = sources.filter((s) => s.season_number === selectedSeason);
+  const rawImage = show.backdrop_path || show.poster_path || show.image_url || '';
+  let imageUrl = '';
+  if (rawImage) {
+    imageUrl = rawImage.startsWith('http') ? rawImage : `https://image.tmdb.org/t/p/original${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+  }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-white">
-      {/* Háttérborító látványelem */}
-      <div className="relative w-full h-[40vh] lg:h-[50vh] overflow-hidden">
-        {series.backdrop_path && (
-          <img
-            src={`https://image.tmdb.org/t/p/original${series.backdrop_path}`}
-            alt={series.title}
-            className="w-full h-full object-cover opacity-30"
+    <div className="min-h-screen bg-[#0b0b0b] text-white relative pb-20">
+      
+      <div className="absolute top-6 left-6 z-40">
+        <button 
+          onClick={() => router.back()}
+          className="bg-black/60 hover:bg-black/90 text-white px-4 py-2 rounded-lg backdrop-blur-md transition flex items-center gap-2 border border-white/10 text-sm font-medium cursor-pointer"
+        >
+          ← Vissza
+        </button>
+      </div>
+
+      <div className="relative w-full h-[60vh] md:h-[70vh] flex items-end">
+        {imageUrl && (
+          <img 
+            src={imageUrl} 
+            alt={show.title || show.name || 'Sorozat'} 
+            className="absolute inset-0 w-full h-full object-cover brightness-60"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-neutral-950 via-neutral-950/40 to-transparent" />
-        
-        <div className="absolute bottom-8 left-8 right-8 max-w-7xl mx-auto flex flex-col md:flex-row gap-6 items-end">
-          <div className="hidden md:block w-40 aspect-[2/3] rounded-xl overflow-hidden shadow-2xl border border-neutral-800 flex-shrink-0">
-            <img
-              src={`https://image.tmdb.org/t/p/w500${series.poster_path}`}
-              alt={series.title}
-              className="w-full h-full object-cover"
-            />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b0b0b] via-[#0b0b0b]/40 to-transparent"></div>
+
+        <div className="relative z-10 px-6 md:px-12 pb-10 max-w-4xl space-y-4">
+          <h1 className="text-4xl md:text-6xl font-black tracking-tight">{show.title || show.name}</h1>
+          <div className="flex items-center gap-4 text-sm text-gray-300">
+            <span className="bg-red-600 text-white font-bold px-2 py-0.5 rounded text-xs">SOROZAT</span>
+            <span>{show.release_year || show.year || '2026'}</span>
           </div>
-          <div>
-            <h1 className="text-3xl md:text-5xl font-bold mb-2">{series.title}</h1>
-            <p className="text-neutral-300 text-sm md:text-base line-clamp-3 max-w-3xl">{series.overview}</p>
-          </div>
+          <p className="text-gray-300 text-sm md:text-base leading-relaxed line-clamp-4">
+            {show.description || show.overview || 'Élvezd ezt a lenyűgöző sorozatot prémium minőségben a Filmsorin.'}
+          </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto p-6 md:p-8 space-y-8">
-        {/* Lejátszó szekció */}
-        {selectedEpisode ? (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-red-500">
-                {selectedSeason}. Évad {selectedEpisode.episode_number}. Epizód
-              </h2>
+      <div className="max-w-6xl mx-auto px-6 mt-6 pb-12">
+        <h2 className="text-2xl font-bold mb-4 text-gray-100 flex items-center gap-2">
+          <span className="w-2 h-6 bg-red-600 rounded-full inline-block"></span>
+          Lejátszás
+        </h2>
+        
+        <div className="aspect-video w-full bg-black rounded-xl overflow-hidden border border-white/10 shadow-2xl relative">
+          {(show.video_url || show.stream_url || show.videa_url || show.url) ? (
+            <iframe 
+              src={show.video_url || show.stream_url || show.videa_url || show.url} 
+              className="w-full h-full border-0 absolute inset-0"
+              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            ></iframe>
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-2">
+              <p>Ehhez a sorozathoz még nincs beállítva videó forrás az adatbázisban.</p>
             </div>
-            <div className="aspect-video w-full bg-black rounded-xl overflow-hidden border border-neutral-800 shadow-2xl">
-              <iframe
-                src={selectedEpisode.source_url}
-                className="w-full h-full"
-                allowFullScreen
-                scrolling="no"
-              />
-            </div>
-          </div>
-        ) : (
-          <div className="p-8 text-center bg-neutral-900 rounded-xl border border-neutral-800 text-neutral-400">
-            Nincs elérhető epizód ehhez a sorozathoz.
-          </div>
-        )}
-
-        {/* Évad választó fülek (Tabs) */}
-        {seasons.length > 0 && (
-          <div className="space-y-6">
-            <div className="flex gap-2 border-b border-neutral-800 pb-4 overflow-x-auto">
-              {seasons.map((season) => (
-                <button
-                  key={season}
-                  onClick={() => {
-                    setSelectedSeason(season);
-                    // Automatikusan az új évad első epizódját jelöljük ki
-                    const firstEpInSeason = sources.find((s) => s.season_number === season);
-                    if (firstEpInSeason) setSelectedEpisode(firstEpInSeason);
-                  }}
-                  className={`px-6 py-2.5 rounded-lg font-medium whitespace-nowrap transition ${
-                    selectedSeason === season
-                      ? 'bg-red-600 text-white shadow-lg shadow-red-600/20'
-                      : 'bg-neutral-900 text-neutral-400 hover:bg-neutral-800 hover:text-white border border-neutral-800'
-                  }`}
-                >
-                  {season}. Évad
-                </button>
-              ))}
-            </div>
-
-            {/* Epizódok választó rácsa */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-              {currentEpisodes.map((ep) => (
-                <button
-                  key={ep.id}
-                  onClick={() => setSelectedEpisode(ep)}
-                  className={`p-4 rounded-xl border text-left transition flex flex-col justify-between h-24 ${
-                    selectedEpisode?.id === ep.id
-                      ? 'bg-red-600/10 border-red-600 text-white shadow-md'
-                      : 'bg-neutral-900 border-neutral-800 text-neutral-300 hover:border-neutral-700 hover:bg-neutral-850'
-                  }`}
-                >
-                  <span className="text-xs text-neutral-400 font-medium uppercase tracking-wider">Epizód</span>
-                  <span className="text-lg font-bold">{ep.episode_number}. Rész</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
     </div>
   );
 }
