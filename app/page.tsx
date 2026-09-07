@@ -152,7 +152,7 @@ function MediaCard({ item, type }: { item: any; type: 'filmek' | 'sorozatok' }) 
   }
 
   const title = item?.title || item?.name || 'Ismeretlen cím';
-  const detailUrl = item?.id ? `/${type}/${item.id}` : '#';
+ const detailUrl = item?.id ? `/filmek/${item.id}` : '#';
 
   return (
     <Link 
