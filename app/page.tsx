@@ -1,198 +1,203 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
+import Link from 'next/link';
 
-
-interface Movie {
-  id: number;
-  tmdb_id: number;
-  title: string;
-  tagline: string;
-  overview: string;
-  rating: number;
-  release_year: string;
-  duration: string;
-  poster_path: string;
-  backdrop_path: string;
-}
-
-interface Source {
-  id: number;
-  movie_id: number;
-  server_name: string;
-  embed_url: string;
-  language: string;
-}
-
-export default function HomePage() {
-  const [movies, setMovies] = useState<Movie[]>([]);
-  const [featuredMovie, setFeaturedMovie] = useState<Movie | null>(null);
-  const [sources, setSources] = useState<Source[]>([]);
-  const [activeEmbed, setActiveEmbed] = useState<string | null>(null);
+export default function Home() {
+  const [movies, setMovies] = useState<any[]>([]);
+  const [shows, setShows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchMovies();
+    const fetchData = async () => {
+      // Filmek lekérdezése
+      const { data: moviesData, error: moviesError } = await supabase
+        .from('movies')
+        .select('*');
+      
+      if (moviesError) {
+        console.error('Hiba a filmek betöltésekor:', moviesError.message);
+      } else {
+        setMovies(moviesData || []);
+      }
+
+      // Sorozatok lekérdezése (próbálva több lehetséges táblanevet is)
+      let { data: showsData } = await supabase.from('shows').select('*');
+      if (!showsData || showsData.length === 0) {
+        const res = await supabase.from('series').select('*');
+        showsData = res.data;
+      }
+      setShows(showsData || []);
+
+      setLoading(false);
+    };
+
+    fetchData();
   }, []);
-
-  const fetchMovies = async () => {
-    const { data: moviesData } = await supabase
-      .from('movies')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (moviesData && moviesData.length > 0) {
-      setMovies(moviesData);
-      selectMovie(moviesData[0]);
-    }
-    setLoading(false);
-  };
-
-  const selectMovie = async (movie: Movie) => {
-    setFeaturedMovie(movie);
-    setActiveEmbed(null);
-
-    const { data: sourcesData } = await supabase
-      .from('sources')
-      .select('*')
-      .eq('movie_id', movie.id);
-
-    if (sourcesData) {
-      setSources(sourcesData);
-    }
-  };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-white flex justify-center items-center font-sans">
-        <p className="text-xl font-bold animate-pulse">Filmsori betöltése...</p>
+      <div className="min-h-screen bg-[#0b0b0b] text-white flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <p className="text-gray-400 font-medium tracking-wider">FILMSORI</p>
+        </div>
       </div>
     );
   }
 
+  // Véletlenszerű vagy legnépszerűbb elem a fő kiemelt háttérhez (Hero banner)
+  const heroItem = movies[0] || shows[0];
+  const heroImage = heroItem 
+    ? (heroItem.backdrop_path || heroItem.poster_path || heroItem.image_url || '') 
+    : '';
+  const heroImageUrl = heroImage.startsWith('http') ? heroImage : `https://image.tmdb.org/t/p/original${heroImage}`;
+
   return (
-    <div className="min-h-screen bg-neutral-950 text-white font-sans selection:bg-red-600 selection:text-white">
-     {/* Fejléc */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-8 py-4 bg-gradient-to-b from-black/80 to-transparent backdrop-blur-sm">
-        <div className="flex items-center gap-8">
-          <span className="text-2xl font-black italic tracking-wider text-red-600 uppercase">
-            Filmsori
-          </span>
-          <nav className="hidden md:flex gap-6 text-sm font-medium text-gray-300 relative z-50">
-            <button onClick={() => window.location.href = '/'} className="text-white hover:text-red-500 transition cursor-pointer">Főoldal</button>
-            <button onClick={() => window.location.href = '/filmek'} className="hover:text-red-500 transition cursor-pointer">Filmek</button>
-            <button onClick={() => window.location.href = '/sorozatok'} className="hover:text-red-500 transition cursor-pointer">Sorozatok</button>
-          </nav>
+    <div className="min-h-screen bg-[#141414] text-white selection:bg-red-600 selection:text-white pb-24">
+      
+      {/* Netflix stílusú fix navigációs sáv */}
+      <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-6 md:px-12 py-4 flex items-center justify-between backdrop-blur-[2px]">
+        <div className="flex items-center gap-10">
+          <Link href="/" className="text-red-600 font-black text-2xl tracking-wider hover:opacity-90 transition">
+            FILMSORI
+          </Link>
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-300">
+            <Link href="/" className="text-white font-bold">Kezdőlap</Link>
+            <Link href="/filmek" className="hover:text-white transition">Filmek</Link>
+            <Link href="/sorozatok" className="hover:text-white transition">Sorozatok</Link>
+          </div>
         </div>
-      </header>
 
-      {/* Hero Kiemelt Film */}
-      {featuredMovie && (
-        <section className="relative w-full min-h-[80vh] flex items-end justify-start pt-28 pb-16 px-8 md:px-16 overflow-hidden">
-          <div
-            className="absolute inset-0 bg-cover bg-center transition-all duration-700 -z-10"
-            style={{
-              backgroundImage: `linear-gradient(to right, rgba(10,10,10,0.95) 20%, rgba(10,10,10,0.4) 60%, rgba(10,10,10,0.8) 100%), linear-gradient(to top, rgba(10,10,10,1) 0%, transparent 50%), url(${featuredMovie.backdrop_path})`,
-            }}
-          />
+        <div className="flex items-center gap-4">
+          <Link href="/filmek" className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded transition shadow-lg">
+            Keresés
+          </Link>
+        </div>
+      </nav>
 
-          <div className="max-w-2xl space-y-4 z-10 w-full">
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight">
-              {featuredMovie.title}
-            </h1>
-
-            {featuredMovie.tagline && (
-              <p className="italic text-gray-400 text-sm md:text-base">
-                "{featuredMovie.tagline}"
-              </p>
-            )}
-
-            <div className="flex items-center gap-3 text-sm font-semibold">
-              <span className="bg-emerald-600/90 text-white px-2 py-0.5 rounded text-xs">
-                ★ {featuredMovie.rating}
-              </span>
-              <span className="text-gray-300">{featuredMovie.release_year}</span>
-              <span className="text-gray-400 border border-neutral-700 px-2 py-0.5 rounded text-xs">
-                {featuredMovie.duration}
-              </span>
+      {/* Hero Banner (Kiemelt tartalom a tetején) */}
+      {heroItem && (
+        <div className="relative w-full h-[65vh] md:h-[75vh] flex items-end pb-16 px-6 md:px-12 overflow-hidden">
+          {heroImageUrl && (
+            <div className="absolute inset-0 z-0">
+              <img 
+                src={heroImageUrl} 
+                alt={heroItem.title || heroItem.name} 
+                className="w-full h-full object-cover object-center brightness-75"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-[#141414] via-transparent to-transparent"></div>
             </div>
+          )}
 
-            <p className="text-gray-300 text-sm md:text-base line-clamp-3 leading-relaxed">
-              {featuredMovie.overview || 'Nincs elérhető leírás ehhez a filmhez.'}
+          <div className="relative z-10 max-w-2xl space-y-4">
+            <h1 className="text-4xl md:text-6xl font-black tracking-tight text-white drop-shadow-md">
+              {heroItem.title || heroItem.name}
+            </h1>
+            <p className="text-gray-300 text-sm md:text-base line-clamp-3 drop-shadow">
+              {heroItem.overview || heroItem.description || 'Fedezd fel ezt a lenyűgöző tartalmat a Filmsorin.'}
             </p>
-
-            {activeEmbed && (
-              <div className="w-full aspect-video rounded-xl overflow-hidden shadow-2xl border border-neutral-800 bg-black mt-4">
-                <iframe
-                  src={activeEmbed}
-                  className="w-full h-full"
-                  allowFullScreen
-                />
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-3 pt-2">
-              {sources.length > 0 ? (
-                sources.map((src) => (
-                  <button
-                    key={src.id}
-                    onClick={() => setActiveEmbed(src.embed_url)}
-                    className="bg-white hover:bg-gray-200 text-black px-6 py-2.5 rounded-lg font-bold flex items-center gap-2 shadow-lg transition active:scale-95"
-                  >
-                    <span>▶</span> Lejátszás ({src.server_name})
-                  </button>
-                ))
-              ) : (
-                <button disabled className="bg-neutral-800 text-gray-500 px-6 py-2.5 rounded-lg font-bold cursor-not-allowed">
-                  Nincs elérhető lejátszó
-                </button>
-              )}
+            <div className="flex items-center gap-4 pt-2">
+              <Link 
+                href={`/film/${heroItem.id}`}
+                className="bg-white hover:bg-white/90 text-black font-bold px-6 py-3 rounded-md flex items-center gap-2 transition shadow-lg"
+              >
+                <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Lejátszás
+              </Link>
+              <Link 
+                href={`/film/${heroItem.id}`}
+                className="bg-gray-500/70 hover:bg-gray-500/50 text-white font-bold px-6 py-3 rounded-md backdrop-blur-md transition shadow-lg"
+              >
+                További információk
+              </Link>
             </div>
           </div>
-        </section>
+        </div>
       )}
 
-      {/* Filmkártyák */}
-      <section className="px-8 md:px-16 py-8 space-y-6">
-        <h2 className="text-xl font-bold tracking-wide text-gray-200">
-          Legfrissebb Filmek
-        </h2>
-
-        {movies.length === 0 ? (
-          <p className="text-gray-500 text-sm">
-            Még nincsenek feltöltött filmek. Lépj be a{' '}
-            <a href="/admin" className="text-red-500 underline">
-              /admin
-            </a>{' '}
-            oldalra az első film hozzáadásához!
-          </p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            {movies.map((movie) => (
-              <div
-                key={movie.id}
-                onClick={() => selectMovie(movie)}
-                className={`group relative aspect-[2/3] rounded-lg overflow-hidden bg-neutral-900 border border-neutral-800 cursor-pointer transition-all duration-300 hover:scale-105 hover:z-20 hover:border-red-600 ${
-                  featuredMovie?.id === movie.id ? 'ring-2 ring-red-600' : ''
-                }`}
-              >
-                <img
-                  src={movie.poster_path}
-                  alt={movie.title}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity p-3 flex flex-col justify-end">
-                  <p className="text-sm font-bold text-white leading-tight">
-                    {movie.title}
-                  </p>
-                </div>
-              </div>
-            ))}
+      {/* Tartalmi sávok (Sorok) */}
+      <div className="space-y-10 -mt-10 relative z-20">
+        
+        {/* Filmek sáv */}
+        {movies.length > 0 && (
+          <div className="px-6 md:px-12">
+            <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-100 flex items-center justify-between">
+              <span>Népszerű Filmek</span>
+              <Link href="/filmek" className="text-xs text-red-500 hover:underline">Összes megtekintése</Link>
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+              {movies.map((movie) => (
+                <MediaCard key={movie.id} item={movie} />
+              ))}
+            </div>
           </div>
         )}
-      </section>
+
+        {/* Sorozatok sáv */}
+        {shows.length > 0 && (
+          <div className="px-6 md:px-12">
+            <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-100 flex items-center justify-between">
+              <span>Népszerű Sorozatok</span>
+              <Link href="/sorozatok" className="text-xs text-red-500 hover:underline">Összes megtekintése</Link>
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
+              {shows.map((show) => (
+                <MediaCard key={show.id} item={show} />
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
     </div>
+  );
+}
+
+// Cseréld le a MediaCard komponenst az app/page.tsx fájl alján erre:
+function MediaCard({ item }: { item: any }) {
+  // Alaposabb mezőellenőrzés
+  const rawImage = item?.poster_path || item?.image_url || item?.poster || item?.thumbnail || item?.backdrop_path || '';
+  
+  let imageUrl = '';
+  if (typeof rawImage === 'string' && rawImage.trim() !== '') {
+    if (rawImage.startsWith('http://') || rawImage.startsWith('https://')) {
+      imageUrl = rawImage;
+    } else if (rawImage.startsWith('/')) {
+      imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
+    } else {
+      imageUrl = `https://image.tmdb.org/t/p/w500/${rawImage}`;
+    }
+  }
+
+  const title = item?.title || item?.name || 'Ismeretlen cím';
+  const detailUrl = item?.id ? `/film/${item.id}` : '#';
+
+  return (
+    <Link 
+      href={detailUrl} 
+      className="group relative bg-[#181818] rounded-md overflow-hidden flex-shrink-0 w-[200px] md:w-[240px] aspect-[16/9] block transition-transform duration-300 hover:scale-105 hover:z-30 shadow-lg border border-white/5"
+    >
+      {imageUrl ? (
+        <img 
+          src={imageUrl} 
+          alt={title} 
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            // Ha mégis elromlana a betöltés, elrejti a hibás képet és nem dob konzol hibát
+            (e.target as HTMLElement).style.display = 'none';
+          }}
+        />
+      ) : (
+        <div className="w-full h-full flex items-center justify-center bg-gray-900 text-gray-400 text-xs text-center p-2">
+          {title}
+        </div>
+      )}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+        <span className="text-white text-xs font-bold truncate">{title}</span>
+      </div>
+    </Link>
   );
 }
