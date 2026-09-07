@@ -55,6 +55,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-[#141414] text-white selection:bg-red-600 selection:text-white pb-24">
       
+      {/* Navigáció */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-6 md:px-12 py-4 flex items-center justify-between backdrop-blur-[2px]">
         <div className="flex items-center gap-10">
           <Link href="/" className="text-red-600 font-black text-2xl tracking-wider hover:opacity-90 transition">
@@ -68,6 +69,7 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* Hero Banner */}
       {heroItem && (
         <div className="relative w-full h-[65vh] md:h-[75vh] flex items-end pb-16 px-6 md:px-12 overflow-hidden">
           {heroImageUrl && (
@@ -90,7 +92,7 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-4 pt-2">
               <Link 
-                href={`/${heroItem.id}`}
+                href={`/filmek/${heroItem.id}`}
                 className="bg-white hover:bg-white/90 text-black font-bold px-6 py-3 rounded-md flex items-center gap-2 transition shadow-lg"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -101,6 +103,7 @@ export default function Home() {
         </div>
       )}
 
+      {/* Tartalmi sávok */}
       <div className="space-y-10 -mt-10 relative z-20">
         {movies.length > 0 && (
           <div className="px-6 md:px-12">
@@ -110,7 +113,7 @@ export default function Home() {
             </h2>
             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
               {movies.map((movie) => (
-                <MediaCard key={movie.id} item={movie} />
+                <MediaCard key={movie.id} item={movie} type="filmek" />
               ))}
             </div>
           </div>
@@ -124,7 +127,7 @@ export default function Home() {
             </h2>
             <div className="flex gap-4 overflow-x-auto pb-4 no-scrollbar scroll-smooth">
               {shows.map((show) => (
-                <MediaCard key={show.id} item={show} />
+                <MediaCard key={show.id} item={show} type="sorozatok" />
               ))}
             </div>
           </div>
@@ -134,7 +137,7 @@ export default function Home() {
   );
 }
 
-function MediaCard({ item }: { item: any }) {
+function MediaCard({ item, type }: { item: any; type: 'filmek' | 'sorozatok' }) {
   const rawImage = item?.poster_path || item?.image_url || item?.poster || item?.thumbnail || item?.backdrop_path || '';
   
   let imageUrl = '';
@@ -149,7 +152,7 @@ function MediaCard({ item }: { item: any }) {
   }
 
   const title = item?.title || item?.name || 'Ismeretlen cím';
-  const detailUrl = item?.id ? `/${item.id}` : '#';
+  const detailUrl = item?.id ? `/${type}/${item.id}` : '#';
 
   return (
     <Link 
