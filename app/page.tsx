@@ -11,26 +11,21 @@ export default function Home() {
 
   useEffect(() => {
     const fetchData = async () => {
-      // Filmek lekérdezése
-      const { data: moviesData, error: moviesError } = await supabase
-        .from('movies')
-        .select('*');
-      
-      if (moviesError) {
-        console.error('Hiba a filmek betöltésekor:', moviesError.message);
-      } else {
+      try {
+        const { data: moviesData } = await supabase.from('movies').select('*');
         setMovies(moviesData || []);
-      }
 
-      // Sorozatok lekérdezése (próbálva több lehetséges táblanevet is)
-      let { data: showsData } = await supabase.from('shows').select('*');
-      if (!showsData || showsData.length === 0) {
-        const res = await supabase.from('series').select('*');
-        showsData = res.data;
+        let { data: showsData } = await supabase.from('shows').select('*');
+        if (!showsData || showsData.length === 0) {
+          const res = await supabase.from('series').select('*');
+          showsData = res.data;
+        }
+        setShows(showsData || []);
+      } catch (err) {
+        console.error('Adatbetöltési hiba:', err);
+      } finally {
+        setLoading(false);
       }
-      setShows(showsData || []);
-
-      setLoading(false);
     };
 
     fetchData();
@@ -38,7 +33,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0b0b0b] text-white flex items-center justify-center">
+      <div className="min-h-screen bg-[#141414] text-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
           <p className="text-gray-400 font-medium tracking-wider">FILMSORI</p>
@@ -47,17 +42,19 @@ export default function Home() {
     );
   }
 
-  // Véletlenszerű vagy legnépszerűbb elem a fő kiemelt háttérhez (Hero banner)
   const heroItem = movies[0] || shows[0];
   const heroImage = heroItem 
     ? (heroItem.backdrop_path || heroItem.poster_path || heroItem.image_url || '') 
     : '';
-  const heroImageUrl = heroImage.startsWith('http') ? heroImage : `https://image.tmdb.org/t/p/original${heroImage}`;
+  
+  let heroImageUrl = '';
+  if (heroImage) {
+    heroImageUrl = heroImage.startsWith('http') ? heroImage : `https://image.tmdb.org/t/p/original${heroImage}`;
+  }
 
   return (
     <div className="min-h-screen bg-[#141414] text-white selection:bg-red-600 selection:text-white pb-24">
       
-      {/* Netflix stílusú fix navigációs sáv */}
       <nav className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 via-black/40 to-transparent px-6 md:px-12 py-4 flex items-center justify-between backdrop-blur-[2px]">
         <div className="flex items-center gap-10">
           <Link href="/" className="text-red-600 font-black text-2xl tracking-wider hover:opacity-90 transition">
@@ -69,26 +66,18 @@ export default function Home() {
             <Link href="/sorozatok" className="hover:text-white transition">Sorozatok</Link>
           </div>
         </div>
-
-        <div className="flex items-center gap-4">
-          <Link href="/filmek" className="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-4 py-2 rounded transition shadow-lg">
-            Keresés
-          </Link>
-        </div>
       </nav>
 
-      {/* Hero Banner (Kiemelt tartalom a tetején) */}
       {heroItem && (
         <div className="relative w-full h-[65vh] md:h-[75vh] flex items-end pb-16 px-6 md:px-12 overflow-hidden">
           {heroImageUrl && (
             <div className="absolute inset-0 z-0">
               <img 
                 src={heroImageUrl} 
-                alt={heroItem.title || heroItem.name} 
+                alt={heroItem.title || heroItem.name || 'Banner'} 
                 className="w-full h-full object-cover object-center brightness-75"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#141414] via-[#141414]/30 to-transparent"></div>
-              <div className="absolute inset-0 bg-gradient-to-r from-[#141414] via-transparent to-transparent"></div>
             </div>
           )}
 
@@ -101,27 +90,18 @@ export default function Home() {
             </p>
             <div className="flex items-center gap-4 pt-2">
               <Link 
-                href={`/film/${heroItem.id}`}
+                href={`/${heroItem.id}`}
                 className="bg-white hover:bg-white/90 text-black font-bold px-6 py-3 rounded-md flex items-center gap-2 transition shadow-lg"
               >
                 <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 Lejátszás
-              </Link>
-              <Link 
-                href={`/film/${heroItem.id}`}
-                className="bg-gray-500/70 hover:bg-gray-500/50 text-white font-bold px-6 py-3 rounded-md backdrop-blur-md transition shadow-lg"
-              >
-                További információk
               </Link>
             </div>
           </div>
         </div>
       )}
 
-      {/* Tartalmi sávok (Sorok) */}
       <div className="space-y-10 -mt-10 relative z-20">
-        
-        {/* Filmek sáv */}
         {movies.length > 0 && (
           <div className="px-6 md:px-12">
             <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-100 flex items-center justify-between">
@@ -136,7 +116,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* Sorozatok sáv */}
         {shows.length > 0 && (
           <div className="px-6 md:px-12">
             <h2 className="text-xl md:text-2xl font-bold mb-4 text-gray-100 flex items-center justify-between">
@@ -150,7 +129,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
@@ -166,14 +144,11 @@ function MediaCard({ item }: { item: any }) {
     } else if (rawImage.startsWith('/')) {
       imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
     } else {
-      // Ha az adatbázisban csak a fájlnév van (pl. ysyCqGLU...), itt kapja meg a TMDB előtagot
       imageUrl = `https://image.tmdb.org/t/p/w500/${rawImage}`;
     }
   }
 
   const title = item?.title || item?.name || 'Ismeretlen cím';
-  
-  // Mivel a fájlkezelődben a dinamikus oldal a gyökérben lévő [id] mappában van, a helyes útvonal: /id
   const detailUrl = item?.id ? `/${item.id}` : '#';
 
   return (
