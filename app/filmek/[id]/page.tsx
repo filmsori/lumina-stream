@@ -102,18 +102,19 @@ export default function FilmReszletekPage() {
       </div>
 
       {/* Videó lejátszó szekció */}
-      <div className="max-w-6xl mx-auto px-6 mt-6">
+      <div className="max-w-6xl mx-auto px-6 mt-6 pb-12">
         <h2 className="text-2xl font-bold mb-4 text-gray-100 flex items-center gap-2">
           <span className="w-2 h-6 bg-red-600 rounded-full inline-block"></span>
           Lejátszás
         </h2>
         
         <div className="aspect-video w-full bg-black rounded-xl overflow-hidden border border-white/10 shadow-2xl relative">
-          {movie.video_url || movie.stream_url || movie.videa_url ? (
+          {(movie.video_url || movie.stream_url || movie.videa_url || movie.url) ? (
             <iframe 
-              src={movie.video_url || movie.stream_url || movie.videa_url} 
-              className="w-full h-full border-0"
+              src={movie.video_url || movie.stream_url || movie.videa_url || movie.url} 
+              className="w-full h-full border-0 absolute inset-0"
               allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             ></iframe>
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 gap-2">
@@ -121,7 +122,7 @@ export default function FilmReszletekPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
-              <p>Ehhez a filmhez még nincs beállítva videó forrás.</p>
+              <p>Ehhez a tartalomhoz még nincs beállítva videó forrás az adatbázisban.</p>
             </div>
           )}
         </div>
