@@ -186,7 +186,7 @@ function MovieCard({ movie }: { movie: any }) {
 
   return (
     <Link 
-      href={`/film/${movie.id}`} 
+      href={`/filmek/${movie.id}`} 
       className="group relative bg-[#141414] rounded-xl overflow-hidden transition-all duration-300 transform hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.8)] hover:z-30 border border-white/5 flex flex-col"
     >
       <div className="aspect-[2/3] w-full bg-gray-900 relative overflow-hidden">
