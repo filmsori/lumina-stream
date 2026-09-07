@@ -166,14 +166,15 @@ function MediaCard({ item }: { item: any }) {
     } else if (rawImage.startsWith('/')) {
       imageUrl = `https://image.tmdb.org/t/p/w500${rawImage}`;
     } else {
+      // Ha az adatbázisban csak a fájlnév van (pl. ysyCqGLU...), itt kapja meg a TMDB előtagot
       imageUrl = `https://image.tmdb.org/t/p/w500/${rawImage}`;
     }
   }
 
   const title = item?.title || item?.name || 'Ismeretlen cím';
   
-  // Itt történik a csere: ha a mappád neve 'filmek', akkor ez irányítja oda helyesen
-  const detailUrl = item?.id ? `/filmek/${item.id}` : '#';
+  // Mivel a fájlkezelődben a dinamikus oldal a gyökérben lévő [id] mappában van, a helyes útvonal: /id
+  const detailUrl = item?.id ? `/${item.id}` : '#';
 
   return (
     <Link 
